@@ -78,3 +78,13 @@ resource "azurerm_role_assignment" "search_to_storage" {
   role_definition_name = "Storage Blob Data Reader"
   principal_id         = azurerm_search_service.ai_search.identity[0].principal_id
 }
+
+# Grant Service Principal access to upload PDFs
+resource "azurerm_role_assignment" "sp_to_storage" {
+  scope                = azurerm_storage_account.documents.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
+# Get current client config
+data "azurerm_client_config" "current" {}
