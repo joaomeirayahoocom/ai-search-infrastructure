@@ -51,6 +51,9 @@ jobs:
           ARM_USE_OIDC: true
           ARM_USE_AZUREAD: true
       
+      - name: Terraform Validate
+        run: terraform validate
+      
       - name: Terraform Plan
         run: terraform plan -var="location=${{ github.event.inputs.location }}" -out=tfplan
         env:
@@ -71,3 +74,19 @@ jobs:
       
       - name: Show Outputs
         run: terraform output
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_USE_OIDC: true
+          ARM_USE_AZUREAD: true
+      
+      - name: Deployment Summary
+        run: |
+          echo "## ✅ Infrastructure Deployed Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Resources Created:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Resource Group: rg-aisearch-poc" >> $GITHUB_STEP_SUMMARY
+          echo "- Storage Account: aisearchdocs001" >> $GITHUB_STEP_SUMMARY
+          echo "- Blob Container: government-docs" >> $GITHUB_STEP_SUMMARY
+          echo "- AI Search Service: aisearch-docs-poc" >> $GITHUB_STEP_SUMMARY

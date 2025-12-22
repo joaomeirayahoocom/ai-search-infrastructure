@@ -1,8 +1,17 @@
-# Azure AI Search POC - Phase 2: Add AI Search Service
-# Local state, CAF-compliant, OIDC authentication
+# Azure AI Search POC - Complete Infrastructure
+# Remote state with Azure Storage backend, CAF-compliant, OIDC authentication
 
 terraform {
   required_version = ">= 1.0"
+  
+  backend "azurerm" {
+    resource_group_name  = "rg-terraform-state"
+    storage_account_name = "tfstateaisearch001"
+    container_name       = "tfstate"
+    key                  = "ai-search-poc.tfstate"
+    use_azuread_auth     = true
+  }
+  
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -55,8 +64,8 @@ resource "azurerm_search_service" "ai_search" {
   location            = azurerm_resource_group.ai_search.location
   sku                 = var.search_sku
   
-  replica_count       = 1
-  partition_count     = 1
+  replica_count = 1
+  partition_count = 1
   
   tags = var.tags
 }

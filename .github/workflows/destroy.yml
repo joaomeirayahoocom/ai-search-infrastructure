@@ -62,3 +62,13 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_USE_OIDC: true
           ARM_USE_AZUREAD: true
+      
+      - name: Cleanup Summary
+        run: |
+          echo "## 🗑️ Infrastructure Destroyed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deleted Resources:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Resource Group: rg-aisearch-poc" >> $GITHUB_STEP_SUMMARY
+          echo "- Storage Account: aisearchdocs001" >> $GITHUB_STEP_SUMMARY
+          echo "- Blob Container: government-docs" >> $GITHUB_STEP_SUMMARY
+          echo "- AI Search Service: aisearch-docs-poc" >> $GITHUB_STEP_SUMMARY
