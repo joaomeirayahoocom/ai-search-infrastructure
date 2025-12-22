@@ -80,7 +80,32 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_USE_OIDC: true
           ARM_USE_AZUREAD: true
+          
+      - name: Get Terraform Outputs
+        id: tf_outputs
+        run: |
+          echo "storage_account=$(terraform output -raw storage_account_name)" >> $GITHUB_OUTPUT
+          echo "container_name=$(terraform output -raw container_name)" >> $GITHUB_OUTPUT
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_USE_OIDC: true
+          ARM_USE_AZUREAD: true
       
+      - name: Upload Sample PDFs
+        uses: azure/CLI@v1
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az storage blob upload-batch \
+              --account-name ${{ steps.tf_outputs.outputs.storage_account }} \
+              --destination ${{ steps.tf_outputs.outputs.container_name }} \
+              --source projects/ai/search/sample-docs/ \
+              --pattern "*.pdf" \
+              --auth-mode login \
+              --overwrite
+
       - name: Deployment Summary
         run: |
           echo "## ✅ Infrastructure Deployed Successfully!" >> $GITHUB_STEP_SUMMARY
