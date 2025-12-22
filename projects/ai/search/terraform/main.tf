@@ -1,4 +1,4 @@
-# Azure AI Search POC - Foundation
+# Azure AI Search POC - Phase 2: Add AI Search Service
 # Local state, CAF-compliant, OIDC authentication
 
 terraform {
@@ -46,4 +46,17 @@ resource "azurerm_storage_container" "gov_docs" {
   name                  = "government-docs"
   storage_account_id    = azurerm_storage_account.documents.id
   container_access_type = "private"
+}
+
+# AI Search Service
+resource "azurerm_search_service" "ai_search" {
+  name                = var.search_service_name
+  resource_group_name = azurerm_resource_group.ai_search.name
+  location            = azurerm_resource_group.ai_search.location
+  sku                 = var.search_sku
+  
+  replica_count       = 1
+  partition_count     = 1
+  
+  tags = var.tags
 }

@@ -16,6 +16,18 @@ variable "storage_account_name" {
   default     = "aisearchdocs001"
 }
 
+variable "search_service_name" {
+  description = "AI Search service name"
+  type        = string
+  default     = "aisearch-docs-poc"
+}
+
+variable "search_sku" {
+  description = "AI Search service SKU"
+  type        = string
+  default     = "free"
+}
+
 variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)
