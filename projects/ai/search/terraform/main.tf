@@ -67,5 +67,14 @@ resource "azurerm_search_service" "ai_search" {
   replica_count = 1
   partition_count = 1
   
+   identity {
+    type = "SystemAssigned"
+  }
+
   tags = var.tags
+}
+resource "azurerm_role_assignment" "search_to_storage" {
+  scope                = azurerm_storage_account.documents.id
+  role_definition_name = "Storage Blob Data Reader"
+  principal_id         = azurerm_search_service.ai_search.identity[0].principal_id
 }
