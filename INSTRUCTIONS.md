@@ -1,124 +1,125 @@
-# Implementation Instructions - Azure Storage Backend
+# Implementation Instructions - Two-Phase Setup
 
 ## Overview
-Complete solution with remote Terraform state in Azure Storage, CAF-compliant, fully automated.
+Clean separation: Terraform manages resources, PowerShell scripts handle permissions (one-time setup).
 
-## Step 1: Setup Terraform State Storage (5 minutes)
+---
 
-**Run this script ONCE:**
+## Phase 1: Terraform State Storage (Already Done ✅)
 
-```powershell
-# Download and run setup-tfstate.ps1
-cd C:\Users\v-joaomeira\GitHub\Projects\ai-search-poc
-# (Place setup-tfstate.ps1 here)
-.\setup-tfstate.ps1
-```
-
-**This creates:**
+You already ran `setup-tfstate.ps1` which created:
 - Resource Group: rg-terraform-state
-- Storage Account: tfstateaisearch001 (CAF-compliant, no shared keys)
-- Blob Container: tfstate
-- Service Principal permissions: Storage Blob Data Contributor
+- Storage Account: tfstateaisearch001
+- SP permissions on state storage
 
-## Step 2: Update GitHub Secret (1 minute)
+**Skip this phase - already complete.**
 
-```powershell
-gh secret set TFSTATE_STORAGE_ACCOUNT -b "tfstateaisearch001"
-```
+---
 
-## Step 3: Replace Terraform Files (2 minutes)
+## Phase 2: Deploy Application Resources
 
-Download and replace these files in `projects\ai\search\terraform\`:
-- main.tf (includes backend configuration)
-- variables.tf (same as before)
-- outputs.tf (includes search service outputs)
+**Step 1: Update main.tf**
+Replace `projects\ai\search\terraform\main.tf` with the new version (role assignments removed)
 
-Download and replace these files in `.github\workflows\`:
-- deploy.yml (updated with backend init)
-- destroy.yml (updated with backend init)
-
-## Step 4: Commit and Push (1 minute)
-
+**Step 2: Commit and Push**
 ```powershell
 cd C:\Users\v-joaomeira\GitHub\Projects\ai-search-poc
 
-git add .
-git commit -m "Add Azure Storage backend for Terraform state"
+git add projects\ai\search\terraform\main.tf
+git commit -m "Remove role assignments from Terraform"
 git push
 ```
 
-## Step 5: Clean Up Existing Resources (2 minutes)
+**Step 3: Deploy**
+- GitHub Actions → "Deploy AI Search Infrastructure"
+- Select eastus
+- Run workflow
+- Wait for completion (~2 min)
 
+**Expected:** Resources created but PDF upload will fail (no permissions yet)
+
+---
+
+## Phase 3: Grant Application Permissions (One-Time)
+
+**Step 1: Run setup script**
 ```powershell
-# Delete the resource group from Phase 1
-az group delete --name rg-aisearch-poc --yes --no-wait
+cd C:\Users\v-joaomeira\GitHub\Projects\ai-search-poc
+.\setup-app-permissions.ps1
 ```
 
-Wait 2-3 minutes for deletion to complete.
+**This grants:**
+- AI Search → Storage (Reader for indexing)
+- Service Principal → Storage (Contributor for uploads)
 
-## Step 6: Deploy with Remote State (3 minutes)
-
-1. Go to GitHub Actions
-2. Run "Deploy AI Search Infrastructure" workflow
-3. Select region: eastus
-4. Watch it deploy
-
-**Expected result:**
-- ✅ Resource group created
-- ✅ Storage account created
-- ✅ Blob container created
-- ✅ AI Search service created
-- ✅ State saved to tfstateaisearch001
-
-## Step 7: Test Destroy (2 minutes)
-
-1. Go to GitHub Actions
-2. Run "Destroy AI Search Infrastructure" workflow
-3. Type "destroy" to confirm
-4. Watch it destroy
-
-**Expected result:**
-- ✅ All resources deleted
-- ✅ State file updated
-- ✅ Clean teardown
+**Step 2: Re-run Deploy Workflow**
+- GitHub Actions → "Deploy AI Search Infrastructure"
+- Select eastus
+- Run workflow
+- This time PDFs will upload successfully ✅
 
 ---
 
-## What Changed
+## Phase 4: Create AI Search Index (Portal - Last Manual Step)
 
-**Before:**
-- Local state (lost between runs)
-- Deploy worked once, then failed
-- Destroy never worked
+**In Azure Portal:**
+1. Go to aisearch-docs-poc
+2. Click "Import data"
+3. Data Source: Azure Blob Storage
+4. Connection: System-assigned managed identity
+5. Container: government-docs
+6. Index name: azureblob-index
+7. Create indexer
+8. Wait 2 min for indexing
 
-**After:**
-- Remote state persists in Azure Storage
-- Deploy works repeatedly
-- Destroy works correctly
-- Fully automated, no manual cleanup
+**Test search in Search Explorer**
 
 ---
 
-## Key Features
+## What's Automated vs Manual
 
-✅ **Remote State:** Persists in Azure Storage
-✅ **CAF-Compliant:** No storage keys, Azure AD auth only
-✅ **OIDC:** Zero secrets for Azure authentication
-✅ **Repeatable:** Deploy/destroy work correctly
-✅ **Professional:** Industry-standard approach
+**Automated (Terraform + GitHub Actions):**
+- ✅ Resource groups
+- ✅ Storage accounts
+- ✅ Blob containers
+- ✅ AI Search service
+- ✅ Managed identity
+- ✅ PDF uploads
+
+**One-Time Setup (PowerShell):**
+- ✅ Terraform state storage
+- ✅ Role assignments (run once, work forever)
+
+**Manual (Portal):**
+- ❌ Index creation (complex, proven working in Portal)
 
 ---
 
 ## Files to Download
 
-1. setup-tfstate.ps1 - One-time state storage setup
-2. main.tf - Infrastructure with backend config
-3. variables.tf - Configuration variables
-4. outputs.tf - Resource outputs
-5. deploy.yml - Deploy workflow
-6. destroy.yml - Destroy workflow
+1. **main.tf** - Updated without role assignments
+2. **setup-app-permissions.ps1** - Grants permissions after first deploy
 
 ---
 
-**Total setup time: ~15 minutes**
-**Result: Production-ready IaC solution**
+## Quick Command Reference
+
+```powershell
+# Phase 2: Deploy
+git add projects\ai\search\terraform\main.tf
+git commit -m "Remove role assignments from Terraform"
+git push
+# Then run Deploy workflow
+
+# Phase 3: Permissions (after deploy completes)
+.\setup-app-permissions.ps1
+# Then run Deploy workflow again
+
+# Future deploys: Just run workflow, permissions persist
+```
+
+---
+
+**Total Time: 10 minutes**
+**Setup Scripts Run: Twice (state + permissions)**
+**Result: Fully repeatable infrastructure**
