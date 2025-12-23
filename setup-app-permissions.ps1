@@ -1,9 +1,9 @@
 # Setup Application Permissions - Run AFTER First Deploy
 # Grants role assignments that Terraform cannot create
 
-# Variables (already set from OIDC setup)
-# $APP_ID
-# $SUBSCRIPTION_ID
+# Variables
+$APP_ID = "edb3b540-5818-46d5-8fdd-702414cbd8a0"
+$SUBSCRIPTION_ID = "086e7bea-9a5e-40f0-9495-7d00486c88b2"
 
 Write-Host "Setting up application permissions..." -ForegroundColor Cyan
 

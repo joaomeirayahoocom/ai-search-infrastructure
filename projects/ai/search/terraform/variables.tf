@@ -25,7 +25,7 @@ variable "search_service_name" {
 variable "search_sku" {
   description = "AI Search service SKU"
   type        = string
-  default     = "free"
+  default     = "basic"
 }
 
 variable "tags" {
